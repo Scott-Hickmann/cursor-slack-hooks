@@ -16,7 +16,13 @@ echo ""
 # Prompt for credentials (pre-fill from env if already set)
 # -------------------------------------------------------------------------
 
-read -rp "Slack Bot Token (xoxb-...): " -i "$SLACK_BOT_TOKEN" INPUT_TOKEN
+if [ -n "$SLACK_BOT_TOKEN" ]; then
+    echo "Current SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN:0:15}..."
+    printf "Slack Bot Token (press Enter to keep current, or paste new): "
+else
+    printf "Slack Bot Token (xoxb-...): "
+fi
+read -r INPUT_TOKEN
 SLACK_BOT_TOKEN="${INPUT_TOKEN:-$SLACK_BOT_TOKEN}"
 
 if [ -z "$SLACK_BOT_TOKEN" ]; then
@@ -25,7 +31,13 @@ if [ -z "$SLACK_BOT_TOKEN" ]; then
     exit 1
 fi
 
-read -rp "Slack Channel ID (C...): " -i "$SLACK_CHANNEL_ID" INPUT_CHANNEL
+if [ -n "$SLACK_CHANNEL_ID" ]; then
+    echo "Current SLACK_CHANNEL_ID: $SLACK_CHANNEL_ID"
+    printf "Slack Channel ID (press Enter to keep current, or paste new): "
+else
+    printf "Slack Channel ID (C...): "
+fi
+read -r INPUT_CHANNEL
 SLACK_CHANNEL_ID="${INPUT_CHANNEL:-$SLACK_CHANNEL_ID}"
 
 if [ -z "$SLACK_CHANNEL_ID" ]; then
@@ -82,7 +94,8 @@ echo "  Saved credentials to $SHELL_RC"
 # -------------------------------------------------------------------------
 
 echo ""
-read -rp "Send a test message to Slack? (y/N): " TEST_CHOICE
+printf "Send a test message to Slack? (y/N): "
+read -r TEST_CHOICE
 if [[ "$TEST_CHOICE" =~ ^[Yy] ]]; then
     echo "  Sending test message..."
     RESULT=$(curl -s -X POST "https://slack.com/api/chat.postMessage" \
