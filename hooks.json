@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterAgentResponse": [
+      {
+        "command": "./hooks/notify-slack-response.sh"
+      }
+    ],
+    "stop": [
+      {
+        "command": "./hooks/notify-slack.sh"
+      }
+    ]
+  }
+}
