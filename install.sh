@@ -35,6 +35,7 @@ SLACK_BOT_TOKEN="${INPUT_TOKEN:-$SLACK_BOT_TOKEN}"
 if [ -z "$SLACK_BOT_TOKEN" ]; then
     echo "Error: SLACK_BOT_TOKEN is required."
     echo "Create a Slack app at https://api.slack.com/apps with chat:write + files:write scopes."
+    echo "  (Add channels:history scope too if you want the Slack reply listener.)"
     exit 1
 fi
 
@@ -73,8 +74,9 @@ mkdir -p "$CURSOR_DIR/hooks"
 cp "$SCRIPT_DIR/hooks/slack_common.py" "$CURSOR_DIR/hooks/slack_common.py"
 cp "$SCRIPT_DIR/hooks/notify-slack.sh" "$CURSOR_DIR/hooks/notify-slack.sh"
 cp "$SCRIPT_DIR/hooks/notify-slack-response.sh" "$CURSOR_DIR/hooks/notify-slack-response.sh"
-chmod +x "$CURSOR_DIR/hooks/notify-slack.sh" "$CURSOR_DIR/hooks/notify-slack-response.sh"
-echo "  Installed hook scripts"
+cp "$SCRIPT_DIR/hooks/slack_listener.py" "$CURSOR_DIR/hooks/slack_listener.py"
+chmod +x "$CURSOR_DIR/hooks/notify-slack.sh" "$CURSOR_DIR/hooks/notify-slack-response.sh" "$CURSOR_DIR/hooks/slack_listener.py"
+echo "  Installed hook scripts (including Slack reply listener)"
 
 # Create state directory
 mkdir -p "$CURSOR_DIR/hooks/state"
@@ -120,6 +122,22 @@ if [[ "$TEST_CHOICE" =~ ^[Yy] ]]; then
 fi
 
 # -------------------------------------------------------------------------
+# Slack reply listener (optional, macOS only)
+# -------------------------------------------------------------------------
+
+echo ""
+echo "The Slack reply listener lets you type in a Slack thread and have the"
+echo "message automatically pasted into Cursor's chat input (macOS only)."
+echo "Requires the channels:history scope on your Slack bot token."
+echo ""
+printf "Start the Slack reply listener? (y/N): "
+read -r LISTENER_CHOICE
+if [[ "$LISTENER_CHOICE" =~ ^[Yy] ]]; then
+    echo "  Starting listener daemon..."
+    python3 "$CURSOR_DIR/hooks/slack_listener.py" start
+fi
+
+# -------------------------------------------------------------------------
 # Done
 # -------------------------------------------------------------------------
 
@@ -130,3 +148,8 @@ echo "Restart Cursor to activate hooks."
 echo ""
 echo "Debug logs:   /tmp/cursor-slack-hook.log"
 echo "Thread state: ~/.cursor/hooks/state/threads.json"
+echo ""
+echo "Slack reply listener (macOS):"
+echo "  Start:   python3 ~/.cursor/hooks/slack_listener.py start"
+echo "  Stop:    python3 ~/.cursor/hooks/slack_listener.py stop"
+echo "  Status:  python3 ~/.cursor/hooks/slack_listener.py status"

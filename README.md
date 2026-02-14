@@ -73,13 +73,13 @@ Cursor Agent Loop
 
 ## Files
 
-| File | Description |
-|------|-------------|
-| `hooks.json` | Cursor hooks configuration |
-| `hooks/slack_common.py` | Shared Slack API helpers + thread state management |
-| `hooks/notify-slack-response.sh` | Posts each agent response to the thread |
-| `hooks/notify-slack.sh` | Posts stop notification + uploads transcript |
-| `install.sh` | Copies everything into `~/.cursor/` |
+| File                             | Description                                        |
+| -------------------------------- | -------------------------------------------------- |
+| `hooks.json`                     | Cursor hooks configuration                         |
+| `hooks/slack_common.py`          | Shared Slack API helpers + thread state management |
+| `hooks/notify-slack-response.sh` | Posts each agent response to the thread            |
+| `hooks/notify-slack.sh`          | Posts stop notification + uploads transcript       |
+| `install.sh`                     | Copies everything into `~/.cursor/`                |
 
 ## Debugging
 
@@ -98,7 +98,7 @@ echo '{"status": "completed", "conversation_id": "test123"}' | ~/.cursor/hooks/n
 
 All configuration is via environment variables:
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SLACK_BOT_TOKEN` | Yes | Bot User OAuth Token (`xoxb-...`) |
-| `SLACK_CHANNEL_ID` | Yes | Channel ID to post notifications to |
+| Variable           | Required | Description                         |
+| ------------------ | -------- | ----------------------------------- |
+| `SLACK_BOT_TOKEN`  | Yes      | Bot User OAuth Token (`xoxb-...`)   |
+| `SLACK_CHANNEL_ID` | Yes      | Channel ID to post notifications to |

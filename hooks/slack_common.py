@@ -217,3 +217,73 @@ def post_message(text, conversation_id, transcript_path=None):
     except Exception as e:
         log(f"chat.postMessage exception: {e}")
         return thread_ts
+
+
+# ---------------------------------------------------------------------------
+# Bot identity
+# ---------------------------------------------------------------------------
+
+def get_bot_user_id():
+    """Get the bot's own Slack user ID via auth.test.
+    Used to filter out the bot's own messages when reading thread replies.
+    Returns the user_id string, or None on failure.
+    """
+    try:
+        result = slack_api_form("auth.test", {})
+        if result.get("ok"):
+            return result.get("user_id")
+        log(f"auth.test failed: {result.get('error', result)}")
+    except Exception as e:
+        log(f"auth.test exception: {e}")
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Thread replies (reading messages back from Slack)
+# ---------------------------------------------------------------------------
+
+def get_thread_replies(thread_ts, oldest=None):
+    """Fetch replies to a Slack thread.
+    Requires the channels:history (public) or groups:history (private) scope.
+
+    Args:
+        thread_ts: The thread's root message timestamp.
+        oldest: Only return messages newer than this timestamp (inclusive).
+
+    Returns:
+        A list of message dicts, or an empty list on failure.
+    """
+    params = {
+        "channel": SLACK_CHANNEL_ID,
+        "ts": thread_ts,
+        "limit": 50,
+    }
+    if oldest:
+        params["oldest"] = oldest
+    try:
+        result = slack_api_form("conversations.replies", params)
+        if result.get("ok"):
+            return result.get("messages", [])
+        log(f"conversations.replies error: {result.get('error', result)}")
+    except Exception as e:
+        log(f"conversations.replies exception: {e}")
+    return []
+
+
+def get_most_recent_thread():
+    """Return (conversation_id, thread_ts) for the most recently created thread.
+    Returns (None, None) if no threads exist.
+    """
+    state = _load_state()
+    if not state:
+        return None, None
+    latest_cid = None
+    latest_ts = "0"
+    for cid, entry in state.items():
+        ts = entry.get("thread_ts", "0") if isinstance(entry, dict) else entry
+        if ts > latest_ts:
+            latest_ts = ts
+            latest_cid = cid
+    if latest_cid:
+        return latest_cid, latest_ts
+    return None, None
