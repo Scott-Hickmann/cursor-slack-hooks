@@ -6,14 +6,21 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CURSOR_DIR="$HOME/.cursor"
-SHELL_RC="$HOME/.zshrc"
-[ -f "$SHELL_RC" ] || SHELL_RC="$HOME/.bashrc"
-
 echo "=== Cursor Slack Hooks Installer ==="
 echo ""
 
 # -------------------------------------------------------------------------
-# Prompt for credentials (pre-fill from env if already set)
+# Load existing config if present
+# -------------------------------------------------------------------------
+
+CONFIG_FILE="$CURSOR_DIR/hooks/state/config.json"
+if [ -f "$CONFIG_FILE" ]; then
+    SLACK_BOT_TOKEN="${SLACK_BOT_TOKEN:-$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('SLACK_BOT_TOKEN',''))" 2>/dev/null)}"
+    SLACK_CHANNEL_ID="${SLACK_CHANNEL_ID:-$(python3 -c "import json; print(json.load(open('$CONFIG_FILE')).get('SLACK_CHANNEL_ID',''))" 2>/dev/null)}"
+fi
+
+# -------------------------------------------------------------------------
+# Prompt for credentials (pre-fill from config/env if already set)
 # -------------------------------------------------------------------------
 
 if [ -n "$SLACK_BOT_TOKEN" ]; then
@@ -73,21 +80,21 @@ echo "  Installed hook scripts"
 mkdir -p "$CURSOR_DIR/hooks/state"
 
 # -------------------------------------------------------------------------
-# Save credentials to shell profile
+# Save credentials to config file (read by hooks at runtime)
 # -------------------------------------------------------------------------
 
 echo ""
 
-# Remove any existing SLACK_BOT_TOKEN / SLACK_CHANNEL_ID exports
-if [ -f "$SHELL_RC" ]; then
-    sed -i.bak '/^export SLACK_BOT_TOKEN=/d' "$SHELL_RC"
-    sed -i.bak '/^export SLACK_CHANNEL_ID=/d' "$SHELL_RC"
-    rm -f "${SHELL_RC}.bak"
-fi
-
-echo "export SLACK_BOT_TOKEN=\"$SLACK_BOT_TOKEN\"" >> "$SHELL_RC"
-echo "export SLACK_CHANNEL_ID=\"$SLACK_CHANNEL_ID\"" >> "$SHELL_RC"
-echo "  Saved credentials to $SHELL_RC"
+python3 -c "
+import json, pathlib, sys
+p = pathlib.Path('$CONFIG_FILE')
+p.parent.mkdir(parents=True, exist_ok=True)
+p.write_text(json.dumps({
+    'SLACK_BOT_TOKEN': sys.argv[1],
+    'SLACK_CHANNEL_ID': sys.argv[2]
+}, indent=2))
+" "$SLACK_BOT_TOKEN" "$SLACK_CHANNEL_ID"
+echo "  Saved credentials to $CONFIG_FILE"
 
 # -------------------------------------------------------------------------
 # Test connection

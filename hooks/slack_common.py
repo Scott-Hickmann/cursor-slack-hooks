@@ -7,8 +7,20 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
-SLACK_CHANNEL_ID = os.environ.get("SLACK_CHANNEL_ID", "")
+def _load_config():
+    """Load credentials from config file, falling back to env vars."""
+    config_file = Path.home() / ".cursor" / "hooks" / "state" / "config.json"
+    token = os.environ.get("SLACK_BOT_TOKEN", "")
+    channel = os.environ.get("SLACK_CHANNEL_ID", "")
+    try:
+        cfg = json.loads(config_file.read_text())
+        token = token or cfg.get("SLACK_BOT_TOKEN", "")
+        channel = channel or cfg.get("SLACK_CHANNEL_ID", "")
+    except Exception:
+        pass
+    return token, channel
+
+SLACK_BOT_TOKEN, SLACK_CHANNEL_ID = _load_config()
 
 LOG = "/tmp/cursor-slack-hook.log"
 STATE_FILE = Path.home() / ".cursor" / "hooks" / "state" / "threads.json"
